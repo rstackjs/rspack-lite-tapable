@@ -24,7 +24,9 @@
     "test": "rstest",
     "bump": "npx bumpp"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "simple-git-hooks": {
     "pre-commit": "npx nano-staged"
   },
@@ -41,7 +43,7 @@
     "@types/node": "^24.10.1",
     "nano-staged": "^0.9.0",
     "simple-git-hooks": "^2.13.1",
-    "typescript": "5.9.3"
+    "typescript": "^6.0.2"
   },
   "packageManager": "pnpm@10.24.0",
   "publishConfig": {
