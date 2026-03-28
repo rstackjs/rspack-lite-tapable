@@ -16,12 +16,12 @@
     }
   },
   "scripts": {
-    "build": "rslib build",
-    "dev": "rslib build --watch",
+    "build": "rslib",
+    "dev": "rslib -w",
     "lint": "biome check .",
     "lint:write": "biome check . --write",
     "prepare": "simple-git-hooks && npm run build",
-    "test": "rstest run",
+    "test": "rstest",
     "bump": "npx bumpp"
   },
   "files": ["dist"],
