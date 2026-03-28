@@ -1,13 +1,4 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:base", "schedule:monthly", "group:allNonMajor"],
-  "rangeStrategy": "bump",
-  "packageRules": [
-    { "depTypeList": ["peerDependencies"], "enabled": false },
-    {
-      "description": "Ignore node engines",
-      "matchPackageNames": ["node"],
-      "enabled": false
-    }
-  ]
+  "extends": ["github>rstackjs/renovate"]
 }
