@@ -1042,6 +1042,30 @@ export class HookMap<H extends Hook> {
     return newHook;
   }
 
+  tap(
+    key: HookMapKey,
+    options: Options<ExtractHookAdditionalOptions<H>>,
+    fn: Fn<ExtractHookArgs<H>, ExtractHookReturn<H>>,
+  ) {
+    return this.for(key).tap(options, fn);
+  }
+
+  tapAsync(
+    key: HookMapKey,
+    options: Options<ExtractHookAdditionalOptions<H>>,
+    fn: FnAsync<ExtractHookArgs<H>, ExtractHookReturn<H>>,
+  ) {
+    return this.for(key).tapAsync(options, fn);
+  }
+
+  tapPromise(
+    key: HookMapKey,
+    options: Options<ExtractHookAdditionalOptions<H>>,
+    fn: FnPromise<ExtractHookArgs<H>, ExtractHookReturn<H>>,
+  ) {
+    return this.for(key).tapPromise(options, fn);
+  }
+
   intercept(interceptor: HookMapInterceptor<H>) {
     this._interceptors.push(
       Object.assign(
