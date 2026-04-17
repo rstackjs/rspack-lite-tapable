@@ -37,15 +37,15 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
-    "@rslib/core": "^0.18.2",
-    "@rspack/core": "^1.6.5",
-    "@rstest/core": "0.6.8",
-    "@types/node": "^24.10.1",
+    "@rslib/core": "^0.21.2",
+    "@rspack/core": "^1.7.11",
+    "@rstest/core": "0.9.8",
+    "@types/node": "^24.12.2",
     "nano-staged": "^1.0.2",
     "simple-git-hooks": "^2.13.1",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.3"
   },
-  "packageManager": "pnpm@10.24.0",
+  "packageManager": "pnpm@10.33.0",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
