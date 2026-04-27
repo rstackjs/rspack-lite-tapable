@@ -24,9 +24,7 @@
     "test": "rstest",
     "bump": "npx bumpp"
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "simple-git-hooks": {
     "pre-commit": "npx nano-staged"
   },

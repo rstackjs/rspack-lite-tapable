@@ -10,7 +10,7 @@
 
 "use strict";
 
-const HookTester = require("./HookTester");
+const HookTester = require("./HookTester.cjs");
 const { AsyncParallelHook } = require("../");
 
 describe("AsyncParallelHook", () => {
