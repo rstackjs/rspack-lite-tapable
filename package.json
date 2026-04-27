@@ -24,9 +24,7 @@
     "test": "rstest",
     "bump": "npx bumpp"
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "simple-git-hooks": {
     "pre-commit": "npx nano-staged"
   },
@@ -37,15 +35,15 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
-    "@rslib/core": "^0.18.2",
+    "@rslib/core": "^0.21.3",
     "@rspack/core": "^2.0.0",
-    "@rstest/core": "0.6.8",
-    "@types/node": "^24.10.1",
+    "@rstest/core": "0.9.9",
+    "@types/node": "^24.12.2",
     "nano-staged": "^1.0.2",
     "simple-git-hooks": "^2.13.1",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.3"
   },
-  "packageManager": "pnpm@10.24.0",
+  "packageManager": "pnpm@10.33.2",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
