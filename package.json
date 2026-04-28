@@ -18,28 +18,25 @@
   "scripts": {
     "build": "rslib",
     "dev": "rslib -w",
-    "lint": "biome check .",
-    "lint:write": "biome check . --write",
-    "prepare": "simple-git-hooks && npm run build",
+    "lint": "rslint && prettier -c .",
+    "lint:write": "rslint --fix && prettier -w .",
+    "prepare": "simple-git-hooks && pnpm run build",
     "test": "rstest",
-    "bump": "npx bumpp"
+    "bump": "pnpx bumpp"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "simple-git-hooks": {
-    "pre-commit": "npx nano-staged"
-  },
-  "nano-staged": {
-    "*.{js,jsx,ts,tsx,mjs,cjs}": [
-      "biome check --write --no-errors-on-unmatched"
-    ]
+    "pre-commit": "pnpm run lint:write"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.4",
     "@rslib/core": "^0.21.3",
+    "@rslint/core": "^0.5.0",
     "@rspack/core": "^2.0.0",
     "@rstest/core": "0.9.9",
     "@types/node": "^24.12.2",
-    "nano-staged": "^1.0.2",
+    "prettier": "^3.8.3",
     "simple-git-hooks": "^2.13.1",
     "typescript": "^6.0.3"
   },

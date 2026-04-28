@@ -26,9 +26,9 @@ export type FnAsync<T, R> = (
 ) => void;
 export type FnPromise<T, R> = (...args: AsArray<T>) => Promise<R>;
 
-declare class UnsetAdditionalOptions {
+type UnsetAdditionalOptions = {
   _UnsetAdditionalOptions: true;
-}
+};
 type IfSet<X> = X extends UnsetAdditionalOptions ? {} : X;
 
 export type Callback<E, T> = (error: E | null, result?: T) => void;
@@ -53,7 +53,7 @@ export type Options<AdditionalOptions = UnsetAdditionalOptions> =
   | (Tap & IfSet<AdditionalOptions>);
 
 export interface HookInterceptor<
-  T,
+  _T,
   R,
   AdditionalOptions = UnsetAdditionalOptions,
 > {
@@ -72,9 +72,8 @@ export interface HookInterceptor<
 type ArgumentNames<T extends any[]> = FixedSizeArray<T['length'], string>;
 type ExtractHookArgs<H> = H extends Hook<infer T, any> ? T : never;
 type ExtractHookReturn<H> = H extends Hook<any, infer R> ? R : never;
-type ExtractHookAdditionalOptions<H> = H extends Hook<any, any, infer A>
-  ? A
-  : never;
+type ExtractHookAdditionalOptions<H> =
+  H extends Hook<any, any, infer A> ? A : never;
 
 export interface Hook<
   T = any,
@@ -93,9 +92,11 @@ export interface Hook<
   queryStageRange(stageRange: StageRange): QueriedHook<T, R, AdditionalOptions>;
 }
 
-export class HookBase<T, R, AdditionalOptions = UnsetAdditionalOptions>
-  implements Hook<T, R, AdditionalOptions>
-{
+export class HookBase<
+  T,
+  R,
+  AdditionalOptions = UnsetAdditionalOptions,
+> implements Hook<T, R, AdditionalOptions> {
   args: ArgumentNames<AsArray<T>>;
   name?: string;
   taps: (FullTap & IfSet<AdditionalOptions>)[];
@@ -203,8 +204,8 @@ export class HookBase<T, R, AdditionalOptions = UnsetAdditionalOptions>
   }
 
   callAsyncStageRange(
-    queried: QueriedHook<T, R, AdditionalOptions>,
-    ...args: Append<AsArray<T>, Callback<Error, R>>
+    _queried: QueriedHook<T, R, AdditionalOptions>,
+    ..._args: Append<AsArray<T>, Callback<Error, R>>
   ) {
     throw new Error('Hook should implement there own _callAsyncStageRange');
   }
@@ -223,7 +224,7 @@ export class HookBase<T, R, AdditionalOptions = UnsetAdditionalOptions>
     return new Promise((resolve, reject) => {
       this.callAsyncStageRange(
         queried,
-        // @ts-expect-error
+        // @ts-expect-error tuple spread includes callback
         ...args,
         (e: Error, r: R) => {
           if (e) return reject(e);
@@ -446,7 +447,7 @@ export class SyncHook<
     let error: Error | undefined;
     this.callAsyncStageRange(
       queried,
-      // @ts-expect-error
+      // @ts-expect-error tuple spread includes callback
       ...args,
       (e: Error, r: R): void => {
         error = e;
@@ -520,7 +521,7 @@ export class SyncBailHook<
     let error: Error | undefined;
     this.callAsyncStageRange(
       queried,
-      // @ts-expect-error
+      // @ts-expect-error tuple spread includes callback
       ...args,
       (e: Error, r: R): void => {
         error = e;
@@ -600,7 +601,7 @@ export class SyncWaterfallHook<
     let error: Error | undefined;
     this.callAsyncStageRange(
       queried,
-      // @ts-expect-error
+      // @ts-expect-error tuple spread includes callback
       ...args,
       (e: Error, r: AsArray<T>[0]): void => {
         error = e;
