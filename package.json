@@ -1,6 +1,6 @@
 {
   "name": "@rspack/lite-tapable",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "repository": "https://github.com/rstackjs/rspack-lite-tapable",
   "license": "MIT",
   "description": "Lite weight tapable for Rspack",
