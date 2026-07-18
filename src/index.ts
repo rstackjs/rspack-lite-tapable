@@ -25,18 +25,19 @@ export type FnAsync<T, R> = (
   ...args: Append<AsArray<T>, InnerCallback<Error, R>>
 ) => void;
 export type FnPromise<T, R> = (...args: AsArray<T>) => Promise<R>;
+type AnyFunction = (...args: any[]) => any;
 
 type UnsetAdditionalOptions = {
   _UnsetAdditionalOptions: true;
 };
-type IfSet<X> = X extends UnsetAdditionalOptions ? {} : X;
+type IfSet<X> = X extends UnsetAdditionalOptions ? unknown : X;
 
 export type Callback<E, T> = (error: E | null, result?: T) => void;
 type InnerCallback<E, T> = (error?: E | null | false, result?: T) => void;
 
 type FullTap = Tap & {
   type: 'sync' | 'async' | 'promise';
-  fn: Function;
+  fn: AnyFunction;
 };
 
 type Tap = TapOptions & {
@@ -49,8 +50,7 @@ type TapOptions = {
 };
 
 export type Options<AdditionalOptions = UnsetAdditionalOptions> =
-  | string
-  | (Tap & IfSet<AdditionalOptions>);
+  string | (Tap & IfSet<AdditionalOptions>);
 
 export interface HookInterceptor<
   _T,
@@ -253,7 +253,7 @@ export class HookBase<
   _tap(
     type: 'sync' | 'async' | 'promise',
     options: Options<AdditionalOptions>,
-    fn: Function,
+    fn: AnyFunction,
   ) {
     let normalizedOptions = options as Tap & IfSet<AdditionalOptions>;
 
