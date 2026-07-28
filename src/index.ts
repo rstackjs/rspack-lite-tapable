@@ -40,7 +40,7 @@ type FullTap = Tap & {
   fn: AnyFunction;
 };
 
-type Tap = TapOptions & {
+export type Tap = TapOptions & {
   name: string;
 };
 
