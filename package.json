@@ -13,7 +13,8 @@
       "types": "./dist/index.d.ts",
       "require": "./dist/index.cjs",
       "import": "./dist/index.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "scripts": {
     "build": "rslib",
