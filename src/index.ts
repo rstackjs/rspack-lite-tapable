@@ -490,7 +490,7 @@ export class SyncBailHook<
     }
     for (const tap of tapsInRange) {
       this._runTapInterceptors(tap);
-      let r = undefined;
+      let r;
       try {
         r = tap.fn(...args2);
       } catch (e) {
