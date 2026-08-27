@@ -12,7 +12,6 @@ export default defineConfig([
     files: ['test/**/*'],
     rules: {
       '@typescript-eslint/no-require-imports': 'off',
-      'no-undef': 'off',
       'no-useless-assignment': 'off',
     },
   },
