@@ -92,6 +92,12 @@ export interface Hook<
   queryStageRange(stageRange: StageRange): QueriedHook<T, R, AdditionalOptions>;
 }
 
+type AllStageTaps<Tap> = {
+  source: Tap[];
+  length: number;
+  taps: Tap[];
+};
+
 export class HookBase<
   T,
   R,
@@ -101,6 +107,7 @@ export class HookBase<
   name?: string;
   taps: (FullTap & IfSet<AdditionalOptions>)[];
   interceptors: HookInterceptor<T, R, AdditionalOptions>[];
+  _allStageTaps: AllStageTaps<FullTap & IfSet<AdditionalOptions>> | undefined;
 
   constructor(
     args = [] as unknown as ArgumentNames<AsArray<T>>,
@@ -110,6 +117,7 @@ export class HookBase<
     this.name = name;
     this.taps = [];
     this.interceptors = [];
+    this._allStageTaps = undefined;
   }
 
   intercept(interceptor: HookInterceptor<T, R, AdditionalOptions>) {
@@ -314,6 +322,31 @@ export class HookBase<
     this.taps[i] = item;
   }
 
+  /**
+   * The taps `queryStageRange(allStageRange)` would select, reused across calls.
+   *
+   * `tap()` always grows `this.taps`, and code that replaces or splices it changes its
+   * identity or length, so both are checked. An interceptor's `register` rewrites taps in
+   * place, but hooks with interceptors never take the path that reads this.
+   */
+  _tapsInAllStages(): (FullTap & IfSet<AdditionalOptions>)[] {
+    const cached = this._allStageTaps;
+    if (
+      cached !== undefined &&
+      cached.source === this.taps &&
+      cached.length === this.taps.length
+    ) {
+      return cached.taps;
+    }
+    const taps = this.queryStageRange(allStageRange).tapsInRange;
+    this._allStageTaps = {
+      source: this.taps,
+      length: this.taps.length,
+      taps,
+    };
+    return taps;
+  }
+
   _prepareArgs(args: AsArray<T>): (T | undefined)[] {
     const len = this.args.length;
     if (args.length < len) {
@@ -436,7 +469,22 @@ export class SyncHook<
   }
 
   call(...args: AsArray<T>): R {
-    return this.callStageRange(this.queryStageRange(allStageRange), ...args);
+    if (this.interceptors.length > 0) {
+      return this.callStageRange(this.queryStageRange(allStageRange), ...args);
+    }
+    // What callStageRange does over all stages when nothing intercepts, without a
+    // QueriedHook, callback and argument copies per call.
+    const taps = this._tapsInAllStages();
+    const args2 = this._prepareArgs(args);
+    try {
+      for (let i = 0; i < taps.length; i++) {
+        taps[i].fn(...args2);
+      }
+    } catch (e) {
+      // callStageRange only rethrows truthy errors
+      if (e) throw e;
+    }
+    return undefined as R;
   }
 
   callStageRange(
@@ -510,7 +558,23 @@ export class SyncBailHook<
   }
 
   call(...args: AsArray<T>): R {
-    return this.callStageRange(this.queryStageRange(allStageRange), ...args);
+    if (this.interceptors.length > 0) {
+      return this.callStageRange(this.queryStageRange(allStageRange), ...args);
+    }
+    // What callStageRange does over all stages when nothing intercepts, without a
+    // QueriedHook, callback and argument copies per call.
+    const taps = this._tapsInAllStages();
+    const args2 = this._prepareArgs(args);
+    try {
+      for (let i = 0; i < taps.length; i++) {
+        const r = taps[i].fn(...args2);
+        if (r !== undefined) return r;
+      }
+    } catch (e) {
+      // callStageRange only rethrows truthy errors
+      if (e) throw e;
+    }
+    return undefined as R;
   }
 
   callStageRange(
@@ -590,7 +654,26 @@ export class SyncWaterfallHook<
   }
 
   call(...args: AsArray<T>): AsArray<T>[0] {
-    return this.callStageRange(this.queryStageRange(allStageRange), ...args);
+    if (this.interceptors.length > 0) {
+      return this.callStageRange(this.queryStageRange(allStageRange), ...args);
+    }
+    // What callStageRange does over all stages when nothing intercepts, without a
+    // QueriedHook, callback and argument copies per call.
+    const taps = this._tapsInAllStages();
+    const args2 = this._prepareArgs(args);
+    try {
+      for (let i = 0; i < taps.length; i++) {
+        const r = taps[i].fn(...args2);
+        if (r !== undefined) {
+          args2[0] = r;
+        }
+      }
+    } catch (e) {
+      // callStageRange only rethrows truthy errors
+      if (e) throw e;
+      return undefined as AsArray<T>[0];
+    }
+    return args2[0] as AsArray<T>[0];
   }
 
   callStageRange(
