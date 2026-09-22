@@ -24,7 +24,8 @@
     "format": "rs fmt",
     "lint": "rs lint",
     "prepare": "rs hooks",
-    "test": "rs test"
+    "test": "rs test",
+    "test:types": "tsc -p test/types/tsconfig.json"
   },
   "files": [
     "dist"

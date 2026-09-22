@@ -609,8 +609,9 @@ export class SyncBailHook<
 
 export class SyncWaterfallHook<
   T,
+  R = AsArray<T>[0],
   AdditionalOptions = UnsetAdditionalOptions,
-> extends HookBase<T, AsArray<T>[0], AdditionalOptions> {
+> extends HookBase<T, R, AdditionalOptions> {
   constructor(
     args = [] as unknown as ArgumentNames<AsArray<T>>,
     name?: string,
@@ -621,15 +622,15 @@ export class SyncWaterfallHook<
   }
 
   callAsyncStageRange(
-    queried: QueriedHook<T, AsArray<T>[0], AdditionalOptions>,
-    ...args: Append<AsArray<T>, Callback<Error, AsArray<T>[0]>>
+    queried: QueriedHook<T, R, AdditionalOptions>,
+    ...args: Append<AsArray<T>, Callback<Error, R>>
   ) {
     const {
       stageRange: [from, to],
       tapsInRange,
     } = queried;
     const argsWithoutCb = args.slice(0, args.length - 1) as AsArray<T>;
-    const cb = args[args.length - 1] as Callback<Error, AsArray<T>[0]>;
+    const cb = args[args.length - 1] as Callback<Error, R>;
     const args2 = this._prepareArgs(argsWithoutCb);
     if (from === minStage) {
       this._runCallInterceptors(...args2);
@@ -649,11 +650,11 @@ export class SyncWaterfallHook<
     }
     if (to === maxStage) {
       this._runDoneInterceptors();
-      cb(null, args2[0]);
+      cb(null, args2[0] as R);
     }
   }
 
-  call(...args: AsArray<T>): AsArray<T>[0] {
+  call(...args: AsArray<T>): R {
     if (this.interceptors.length > 0) {
       return this.callStageRange(this.queryStageRange(allStageRange), ...args);
     }
@@ -671,22 +672,22 @@ export class SyncWaterfallHook<
     } catch (e) {
       // callStageRange only rethrows truthy errors
       if (e) throw e;
-      return undefined as AsArray<T>[0];
+      return undefined as R;
     }
-    return args2[0] as AsArray<T>[0];
+    return args2[0] as R;
   }
 
   callStageRange(
-    queried: QueriedHook<T, AsArray<T>[0], AdditionalOptions>,
+    queried: QueriedHook<T, R, AdditionalOptions>,
     ...args: AsArray<T>
-  ): AsArray<T>[0] {
-    let result: AsArray<T>[0] | undefined;
+  ): R {
+    let result: R | undefined;
     let error: Error | undefined;
     this.callAsyncStageRange(
       queried,
       // @ts-expect-error tuple spread includes callback
       ...args,
-      (e: Error, r: AsArray<T>[0]): void => {
+      (e: Error, r: R): void => {
         error = e;
         result = r;
       },
@@ -694,7 +695,7 @@ export class SyncWaterfallHook<
     if (error) {
       throw error;
     }
-    return result as AsArray<T>[0];
+    return result as R;
   }
 
   tapAsync(): never {
@@ -979,8 +980,9 @@ export class AsyncSeriesBailHook<
 
 export class AsyncSeriesWaterfallHook<
   T,
+  R = AsArray<T>[0],
   AdditionalOptions = UnsetAdditionalOptions,
-> extends HookBase<T, AsArray<T>[0], AdditionalOptions> {
+> extends HookBase<T, R, AdditionalOptions> {
   constructor(
     args = [] as unknown as ArgumentNames<AsArray<T>>,
     name?: string,
@@ -991,20 +993,20 @@ export class AsyncSeriesWaterfallHook<
   }
 
   callAsyncStageRange(
-    queried: QueriedHook<T, AsArray<T>[0], AdditionalOptions>,
-    ...args: Append<AsArray<T>, Callback<Error, AsArray<T>[0]>>
+    queried: QueriedHook<T, R, AdditionalOptions>,
+    ...args: Append<AsArray<T>, Callback<Error, R>>
   ) {
     const {
       stageRange: [from],
       tapsInRange,
     } = queried;
     const argsWithoutCb = args.slice(0, args.length - 1) as AsArray<T>;
-    const cb = args[args.length - 1] as Callback<Error, AsArray<T>[0]>;
+    const cb = args[args.length - 1] as Callback<Error, R>;
     const args2 = this._prepareArgs(argsWithoutCb);
     if (from === minStage) {
       this._runCallInterceptors(...args2);
     }
-    const result = (r: AsArray<T>[0]) => {
+    const result = (r: R) => {
       this._runResultInterceptors(r);
       cb(null, r);
     };
@@ -1012,7 +1014,7 @@ export class AsyncSeriesWaterfallHook<
       this._runErrorInterceptors(e);
       cb(e);
     };
-    if (tapsInRange.length === 0) return result(args2[0]);
+    if (tapsInRange.length === 0) return result(args2[0] as R);
     let index = 0;
     const next = () => {
       const tap = tapsInRange[index];
@@ -1025,13 +1027,13 @@ export class AsyncSeriesWaterfallHook<
           );
         }
         promise.then(
-          (r: AsArray<T>[0]) => {
+          (r: R) => {
             index += 1;
             if (r !== undefined) {
-              args2[0] = r as T | undefined;
+              args2[0] = r as unknown as T | undefined;
             }
             if (index === tapsInRange.length) {
-              result(args2[0]);
+              result(args2[0] as R);
             } else {
               next();
             }
@@ -1042,17 +1044,17 @@ export class AsyncSeriesWaterfallHook<
           },
         );
       } else if (tap.type === 'async') {
-        tap.fn(...args2, (e: Error, r: AsArray<T>[0]) => {
+        tap.fn(...args2, (e: Error, r: R) => {
           if (e) {
             index = tapsInRange.length;
             error(e);
           } else {
             index += 1;
             if (r !== undefined) {
-              args2[0] = r as T | undefined;
+              args2[0] = r as unknown as T | undefined;
             }
             if (index === tapsInRange.length) {
-              result(args2[0]);
+              result(args2[0] as R);
             } else {
               next();
             }
@@ -1073,7 +1075,7 @@ export class AsyncSeriesWaterfallHook<
         if (!hasError) {
           index += 1;
           if (index === tapsInRange.length) {
-            result(args2[0]);
+            result(args2[0] as R);
           } else {
             next();
           }
