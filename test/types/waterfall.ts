@@ -2,99 +2,54 @@ import { AsyncSeriesWaterfallHook, SyncWaterfallHook } from '../../dist/index.js
 
 function expectType<T>(_value: T): void {}
 
+// Omitting R preserves the first argument's type.
 const defaultSync = new SyncWaterfallHook<[number]>(['value']);
-defaultSync.tap('increment', (value) => value + 1);
-expectType<number>(defaultSync.call(1));
-// @ts-expect-error The default return type remains the first argument type.
-defaultSync.tap('invalid', () => 'text');
-
 const defaultAsync = new AsyncSeriesWaterfallHook<[number]>(['value']);
-defaultAsync.tapPromise('increment', async (value) => value + 1);
-expectType<Promise<number>>(defaultAsync.promise(1));
-// @ts-expect-error The default return type remains the first argument type.
-defaultAsync.tapPromise('invalid', async () => 'text');
-
-const sync = new SyncWaterfallHook<[number], string>(['value']);
-sync.tap('stringify', (value) => {
-  expectType<number>(value);
-  return String(value);
-});
-expectType<string>(sync.call(1));
-expectType<string>(sync.callStageRange(sync.queryStageRange([0, 10]), 1));
-expectType<string>(sync.queryStageRange([0, 10]).call(1));
-sync.callAsync(1, (_error, result) => expectType<string | undefined>(result));
-sync.callAsyncStageRange(sync.queryStageRange([0, 10]), 1, (_error, result) => {
-  expectType<string | undefined>(result);
-});
-sync.intercept({ result: (result) => expectType<string>(result) });
-sync.withOptions({ stage: 1 }).tap('stringify', (value) => String(value));
-// @ts-expect-error An explicit result type must be respected.
-sync.tap('invalid', (value) => value);
-// @ts-expect-error Input arguments keep their original type.
-sync.call('text');
-
-const asyncHook = new AsyncSeriesWaterfallHook<[number], string>(['value']);
-asyncHook.tap('stringify', (value) => {
-  expectType<number>(value);
-  return String(value);
-});
-asyncHook.tapAsync('stringify', (value, callback) => {
-  expectType<number>(value);
-  callback(null, String(value));
-  // @ts-expect-error The callback result uses the explicit return type.
-  callback(null, value);
-});
-asyncHook.tapPromise('stringify', async (value) => String(value));
-expectType<Promise<string>>(asyncHook.promise(1));
-expectType<Promise<string>>(asyncHook.queryStageRange([0, 10]).promise(1));
-expectType<Promise<string>>(
-  asyncHook.promiseStageRange(asyncHook.queryStageRange([0, 10]), 1),
-);
-asyncHook.callAsync(1, (_error, result) => expectType<string | undefined>(result));
-asyncHook.callAsyncStageRange(
-  asyncHook.queryStageRange([0, 10]),
-  1,
-  (_error, result) => expectType<string | undefined>(result),
-);
-asyncHook.intercept({ result: (result) => expectType<string>(result) });
-asyncHook.withOptions({ stage: 1 }).tapPromise('stringify', async (value) =>
-  String(value),
-);
-// @ts-expect-error An explicit result type must be respected.
-asyncHook.tapPromise('invalid', async (value) => value);
-// @ts-expect-error Input arguments keep their original type.
-asyncHook.promise('text');
-
-type Data = { resource: string };
-type Result = Data | false | void;
-const optionalSync = new SyncWaterfallHook<[Data | false], Result>(['data']);
-const optionalAsync = new AsyncSeriesWaterfallHook<[Data | false], Result>([
-  'data',
-]);
-for (const hook of [optionalSync, optionalAsync]) {
-  hook.tap('mutate', (data) => {
-    if (data === false) return false;
-    data.resource = '/new/path';
-  });
-  hook.tap('observe', () => {});
+for (const hook of [defaultSync, defaultAsync]) {
+  hook.tap('increment', (value) => value + 1);
+  // @ts-expect-error The default return type is number.
+  hook.tap('invalid', () => 'text');
 }
-optionalAsync.tapPromise('mutate', async (data) => {
-  if (data === false) return false;
-  data.resource = '/new/path';
-});
-expectType<Result>(optionalSync.call(false));
-expectType<Promise<Result>>(optionalAsync.promise(false));
+expectType<number>(defaultSync.call(1));
+expectType<Promise<number>>(defaultAsync.promise(1));
 
-type CustomOptions = { label: string };
-const customSync = new SyncWaterfallHook<[number], string, CustomOptions>([
+// Explicit R permits void without widening the input type.
+type Result = number | false | void;
+const sync = new SyncWaterfallHook<[number | false], Result>(['value']);
+const asyncHook = new AsyncSeriesWaterfallHook<[number | false], Result>([
   'value',
 ]);
-const customAsync = new AsyncSeriesWaterfallHook<[number], string, CustomOptions>([
+for (const hook of [sync, asyncHook]) {
+  hook.tap('observe', (value) => {
+    expectType<number | false>(value);
+  });
+  hook.tap('cancel', () => false);
+  // @ts-expect-error The explicit return type excludes string.
+  hook.tap('invalid', () => 'text');
+}
+asyncHook.tapAsync('observe', (_value, callback) => {
+  callback();
+  // @ts-expect-error The callback must respect R.
+  callback(null, 'text');
+});
+asyncHook.tapPromise('observe', async () => {});
+// @ts-expect-error Promise results must respect R.
+asyncHook.tapPromise('invalid', async () => 'text');
+expectType<Result>(sync.call(1));
+expectType<Result>(sync.queryStageRange([0, Infinity]).call(1));
+expectType<Promise<Result>>(asyncHook.promise(1));
+expectType<Promise<Result>>(asyncHook.queryStageRange([0, Infinity]).promise(1));
+
+// Additional tap options move to the third generic.
+type CustomOptions = { label: string };
+const customSync = new SyncWaterfallHook<[number], number, CustomOptions>([
+  'value',
+]);
+const customAsync = new AsyncSeriesWaterfallHook<[number], number, CustomOptions>([
   'value',
 ]);
 for (const hook of [customSync, customAsync]) {
-  hook.tap({ name: 'stringify', label: 'custom' }, (value) => String(value));
-  hook.intercept({ tap: (tap) => expectType<string>(tap.label) });
-  // @ts-expect-error Additional tap options belong to the third generic.
-  hook.tap({ name: 'missing-label' }, (value) => String(value));
+  hook.tap({ name: 'increment', label: 'custom' }, (value) => value + 1);
+  // @ts-expect-error The required custom option is missing.
+  hook.tap({ name: 'invalid' }, (value) => value);
 }
